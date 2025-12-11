@@ -5,8 +5,8 @@
 
 ;; Author: Arthur Heymans
 ;; Version: 0.1
-;; Package-Requires: ((emacs "28.1") (forge "0.6.2") (gptel "0.9.8"))
-;; Keywords: vc, convenience
+;; Package-Requires: ((emacs "28.1") (forge "0.3") (gptel "0.9"))
+;; Keywords: forge, vc, convenience, llm, pull-request
 ;; URL: https://github.com/ArthurHeymans/gptel-forge
 
 ;;; Commentary:

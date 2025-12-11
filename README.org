@@ -6,10 +6,28 @@ Inspired by [[https://github.com/ArthurHeymans/gptel-magit][gptel-magit]], which
 
 * Installation
 
-Install the package and run =gptel-forge-install= at an appropriate time, for example:
+** use-package
 
 #+begin_src emacs-lisp
 (use-package gptel-forge
+  :after forge
+  :config
+  (gptel-forge-install))
+#+end_src
+
+** Doom Emacs
+
+In =packages.el=:
+
+#+begin_src emacs-lisp
+(package! gptel-forge
+  :recipe (:host github :repo "ArthurHeymans/gptel-forge"))
+#+end_src
+
+In =config.el=:
+
+#+begin_src emacs-lisp
+(use-package! gptel-forge
   :after forge
   :config
   (gptel-forge-install))

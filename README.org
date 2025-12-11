@@ -1,0 +1,33 @@
+#+TITLE: gptel-forge: LLM functionality for forge
+
+Uses the fantastic [[https://github.com/karthink/gptel][gptel]] to extend [[https://github.com/magit/forge][forge]] with LLM-powered pull request description generation.
+
+Inspired by [[https://github.com/ArthurHeymans/gptel-magit][gptel-magit]], which provides similar functionality for generating commit messages in magit.
+
+* Installation
+
+Install the package and run =gptel-forge-install= at an appropriate time, for example:
+
+#+begin_src emacs-lisp
+(use-package gptel-forge
+  :after forge
+  :config
+  (gptel-forge-install))
+#+end_src
+
+* Usage
+
+** PR descriptions
+
+When creating a pull request with =forge-create-pullreq=, you can generate a description in two ways:
+
+1. Press =M-g= to generate a PR description from the diff between source and target branches.
+2. Press =M-r= to first enter a rationale (explaining why the changes were made), then generate a description with that context.
+
+* Customisation
+
+Prompts, model and backend can be customised, see =customize-group gptel-forge=.
+
+- =gptel-forge-pr-prompt= :: The system prompt for generating PR descriptions. Two presets are available: =gptel-forge-prompt-default= and =gptel-forge-prompt-conventional= (for conventional commit style).
+- =gptel-forge-model= :: Override the gptel model (defaults to =gptel-model=).
+- =gptel-forge-backend= :: Override the gptel backend (defaults to =gptel-backend=).

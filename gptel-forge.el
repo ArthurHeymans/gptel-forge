@@ -252,12 +252,14 @@ which helps the LLM generate a better description."
 (defun gptel-forge-install ()
   "Install gptel-forge functionality.
 This adds keybindings to `forge-post-mode-map' for generating PR descriptions."
+  (require 'forge-post)
   (define-key forge-post-mode-map (kbd "M-g") #'gptel-forge-generate-description)
   (define-key forge-post-mode-map (kbd "M-r") #'gptel-forge-generate-description-with-rationale))
 
 ;;;###autoload
 (defun gptel-forge-uninstall ()
   "Uninstall gptel-forge functionality."
+  (require 'forge-post)
   (define-key forge-post-mode-map (kbd "M-g") nil)
   (define-key forge-post-mode-map (kbd "M-r") nil))
 

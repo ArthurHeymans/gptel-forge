@@ -1,10 +1,10 @@
 ;;; gptel-forge.el --- Generate PR descriptions for forge using gptel -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025 Authors
-;; SPDX-License-Identifier: Apache-2.0
+;; SPDX-License-Identifier: GPL-3.0
 
 ;; Author: Arthur Heymans
-;; Version: 1.0
+;; Version: 0.1
 ;; Package-Requires: ((emacs "28.1") (forge "0.4") (gptel "0.9.8"))
 ;; Keywords: vc, convenience
 ;; URL: https://github.com/ArthurHeymans/gptel-forge

@@ -1,4 +1,4 @@
-#+TITLE: gptel-forge: LLM functionality for forge
+#+TITLE: gptel-forge: LLM functionality for pull request using forge
 
 Uses the fantastic [[https://github.com/karthink/gptel][gptel]] to extend [[https://github.com/magit/forge][forge]] with LLM-powered pull request description generation.
 

@@ -37,15 +37,29 @@ In =config.el=:
 
 ** PR descriptions
 
-When creating a pull request with =forge-create-pullreq=, you can generate a description in two ways:
+When creating a pull request with =forge-create-pullreq=, you have two options:
 
 1. Press =M-g= to generate a PR description from the diff between source and target branches.
 2. Press =M-r= to first enter a rationale (explaining why the changes were made), then generate a description with that context.
 
+** PR Templates
+
+When you create a pull request, forge automatically inserts any PR template from your repository (e.g., =.github/PULL_REQUEST_TEMPLATE.md=) into the buffer. =gptel-forge= detects this existing content and passes it to the LLM as a structure to follow.
+
+The LLM will:
+- Keep all section headers from the template unchanged
+- Fill in each section with relevant information based on the code diff
+- Write 'N/A' for sections that don't apply to the changes
+
+This means you get properly structured PR descriptions that follow your repository's conventions automatically.
+
+To disable this behavior and generate descriptions without following the buffer template, set =gptel-forge-use-buffer-template= to =nil=.
+
 * Customisation
 
-Prompts, model and backend can be customised, see =customize-group gptel-forge=.
+Prompts, model, backend, and PR template behavior can be customised. See =customize-group gptel-forge=.
 
 - =gptel-forge-pr-prompt= :: The system prompt for generating PR descriptions. Two presets are available: =gptel-forge-prompt-default= and =gptel-forge-prompt-conventional= (for conventional commit style).
 - =gptel-forge-model= :: Override the gptel model (defaults to =gptel-model=).
 - =gptel-forge-backend= :: Override the gptel backend (defaults to =gptel-backend=).
+- =gptel-forge-use-buffer-template= :: Whether to use existing buffer content as a template structure (default: =t=).

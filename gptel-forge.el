@@ -176,10 +176,15 @@ or nil if the buffer is empty or `gptel-forge-use-buffer-template' is nil."
 (defun gptel-forge--get-diff (source target)
   "Get the diff between SOURCE and TARGET branches for PR."
   (when (and source target)
-    (let ((diff (magit-git-output "diff" (format "%s...%s" target source))))
-      (if (or (null diff) (string-empty-p diff))
+    (let ((diff-result
+           (with-temp-buffer
+             ;; Use magit-git-insert which inserts git output into current buffer
+             ;; This is more native than magit-git-output as it works with buffers
+             (magit-git-insert "diff" (format "%s...%s" target source))
+             (buffer-string))))
+      (if (or (null diff-result) (string-empty-p diff-result))
           (error "No diff found between %s and %s" target source)
-        diff))))
+        diff-result))))
 
 (defun gptel-forge--generate (source target callback &optional rationale buffer-template)
   "Generate a PR description for SOURCE to TARGET branches.

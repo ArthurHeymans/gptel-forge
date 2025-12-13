@@ -5,7 +5,7 @@
 
 ;; Author: Arthur Heymans
 ;; Version: 0.1
-;; Package-Requires: ((emacs "28.1") (forge "0.3") (gptel "0.9"))
+;; Package-Requires: ((emacs "28.1") (magit "4.0")(forge "0.3") (gptel "0.9"))
 ;; Keywords: forge, vc, convenience, llm, pull-request
 ;; URL: https://github.com/ArthurHeymans/gptel-forge
 
@@ -35,6 +35,7 @@
 (require 'gptel)
 (require 'forge)
 (require 'forge-post)
+(require 'magit-git)
 
 (defgroup gptel-forge nil
   "Generate PR descriptions using gptel."

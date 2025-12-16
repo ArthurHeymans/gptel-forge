@@ -59,11 +59,15 @@ jobs:
             --eval "(require 'checkdoc)" \
             --eval "(setq checkdoc-force-docstrings-flag t)" \
             --eval "(setq checkdoc-force-history-flag nil)" \
-            --eval "(let ((errors (checkdoc-file \"gptel-forge-prs.el\"))) \
-                      (when errors \
-                        (message \"Checkdoc errors found:\") \
-                        (dolist (err errors) (message \"%s\" err)) \
-                        (kill-emacs 1)))"
+            --eval "(setq checkdoc-spellcheck-documentation-flag nil)" \
+            --eval "(with-current-buffer (find-file-noselect \"gptel-forge-prs.el\") \
+                      (let ((err (or (checkdoc-comments) \
+                                     (checkdoc-start) \
+                                     (checkdoc-message-text) \
+                                     (checkdoc-rogue-spaces)))) \
+                        (when err \
+                          (message \"Checkdoc error: %s\" (checkdoc-error-text err)) \
+                          (kill-emacs 1))))"
 
   package-lint:
     runs-on: ubuntu-latest

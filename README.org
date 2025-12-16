@@ -1,4 +1,4 @@
-#+TITLE: gptel-forge: LLM functionality for pull request using forge
+#+TITLE: gptel-forge-prs: LLM functionality for pull request using forge
 
 Uses the fantastic [[https://github.com/karthink/gptel][gptel]] to extend [[https://github.com/magit/forge][forge]] with LLM-powered pull request description generation.
 
@@ -9,10 +9,10 @@ Inspired by [[https://github.com/ArthurHeymans/gptel-magit][gptel-magit]], which
 ** use-package
 
 #+begin_src emacs-lisp
-(use-package gptel-forge
+(use-package gptel-forge-prs
   :after forge
   :config
-  (gptel-forge-install))
+  (gptel-forge-prs-install))
 #+end_src
 
 ** Doom Emacs
@@ -20,17 +20,17 @@ Inspired by [[https://github.com/ArthurHeymans/gptel-magit][gptel-magit]], which
 In =packages.el=:
 
 #+begin_src emacs-lisp
-(package! gptel-forge
-  :recipe (:host github :repo "ArthurHeymans/gptel-forge"))
+(package! gptel-forge-prs
+  :recipe (:host github :repo "ArthurHeymans/gptel-forge-prs"))
 #+end_src
 
 In =config.el=:
 
 #+begin_src emacs-lisp
-(use-package! gptel-forge
+(use-package! gptel-forge-prs
   :after forge
   :config
-  (gptel-forge-install))
+  (gptel-forge-prs-install))
 #+end_src
 
 * Usage
@@ -44,7 +44,7 @@ When creating a pull request with =forge-create-pullreq=, you have two options:
 
 ** PR Templates
 
-When you create a pull request, forge automatically inserts any PR template from your repository (e.g., =.github/PULL_REQUEST_TEMPLATE.md=) into the buffer. =gptel-forge= detects this existing content and passes it to the LLM as a structure to follow.
+When you create a pull request, forge automatically inserts any PR template from your repository (e.g., =.github/PULL_REQUEST_TEMPLATE.md=) into the buffer. =gptel-forge-prs= detects this existing content and passes it to the LLM as a structure to follow.
 
 The LLM will:
 - Keep all section headers from the template unchanged
@@ -53,13 +53,13 @@ The LLM will:
 
 This means you get properly structured PR descriptions that follow your repository's conventions automatically.
 
-To disable this behavior and generate descriptions without following the buffer template, set =gptel-forge-use-buffer-template= to =nil=.
+To disable this behavior and generate descriptions without following the buffer template, set =gptel-forge-prs-use-buffer-template= to =nil=.
 
 * Customisation
 
-Prompts, model, backend, and PR template behavior can be customised. See =customize-group gptel-forge=.
+Prompts, model, backend, and PR template behavior can be customised. See =customize-group gptel-forge-prs=.
 
-- =gptel-forge-pr-prompt= :: The system prompt for generating PR descriptions. Two presets are available: =gptel-forge-prompt-default= and =gptel-forge-prompt-conventional= (for conventional commit style).
-- =gptel-forge-model= :: Override the gptel model (defaults to =gptel-model=).
-- =gptel-forge-backend= :: Override the gptel backend (defaults to =gptel-backend=).
-- =gptel-forge-use-buffer-template= :: Whether to use existing buffer content as a template structure (default: =t=).
+- =gptel-forge-prs-pr-prompt= :: The system prompt for generating PR descriptions. Two presets are available: =gptel-forge-prs-prompt-default= and =gptel-forge-prs-prompt-conventional= (for conventional commit style).
+- =gptel-forge-prs-model= :: Override the gptel model (defaults to =gptel-model=).
+- =gptel-forge-prs-backend= :: Override the gptel backend (defaults to =gptel-backend=).
+- =gptel-forge-prs-use-buffer-template= :: Whether to use existing buffer content as a template structure (default: =t=).

@@ -1,4 +1,4 @@
-;;; gptel-forge.el --- Generate PR descriptions for forge using gptel -*- lexical-binding: t; -*-
+;;; gptel-forge-prs.el --- Generate PR descriptions for forge using gptel -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025 Authors
 ;; SPDX-License-Identifier: GPL-3.0
@@ -7,7 +7,7 @@
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "28.1") (magit "4.0")(forge "0.3") (gptel "0.9"))
 ;; Keywords: forge, vc, convenience, llm, pull-request
-;; URL: https://github.com/ArthurHeymans/gptel-forge
+;; URL: https://github.com/ArthurHeymans/gptel-forge-prs
 
 ;;; Commentary:
 
@@ -22,12 +22,12 @@
 ;; - Customizable prompts and templates
 ;;
 ;; Usage:
-;; 1. Call `gptel-forge-install' to set up keybindings
+;; 1. Call `gptel-forge-prs-install' to set up keybindings
 ;; 2. When creating a PR with forge, use:
 ;;    - M-g to generate a PR description
 ;;    - M-r to generate with rationale
 ;;
-;; When forge inserts a PR template into the buffer, gptel-forge will
+;; When forge inserts a PR template into the buffer, gptel-forge-prs will
 ;; automatically use it as a structure when generating the description.
 
 ;;; Code:
@@ -37,12 +37,12 @@
 (require 'forge-post)
 (require 'magit-git)
 
-(defgroup gptel-forge nil
+(defgroup gptel-forge-prs nil
   "Generate PR descriptions using gptel."
   :group 'forge
   :group 'gptel)
 
-(defconst gptel-forge-prompt-default
+(defvar gptel-forge-prs-prompt-default
   "You are an expert at writing pull request descriptions. Your job is to write a clear, concise PR description that summarizes the changes.
 
 If a PR template is provided, follow its structure exactly:
@@ -69,7 +69,7 @@ Format (when no template is provided):
 - Then the body of the description"
   "Default prompt for generating PR descriptions.")
 
-(defconst gptel-forge-prompt-conventional
+(defvar gptel-forge-prs-prompt-conventional
   "You are an expert at writing pull request descriptions following conventional commit style. Your job is to write a clear, concise PR description.
 
 The PR title should be structured as:
@@ -99,66 +99,66 @@ Format:
 - Body with summary and details (or follow the provided template)"
   "Conventional commits style prompt for generating PR descriptions.")
 
-(defcustom gptel-forge-pr-prompt gptel-forge-prompt-default
+(defcustom gptel-forge-prs-pr-prompt gptel-forge-prs-prompt-default
   "The prompt to use for generating a PR description.
 The prompt should consider that the input will be a diff of changes
 between the source and target branches."
   :type 'string
-  :group 'gptel-forge)
+  :group 'gptel-forge-prs)
 
-(defcustom gptel-forge-use-buffer-template t
-  "Whether to include the buffer's existing content as a template for the LLM.
-When non-nil and the buffer has content, gptel-forge will pass the existing
-buffer content (typically a PR template inserted by forge) to the LLM to use
-as a structure for the generated description."
+(defcustom gptel-forge-prs-use-buffer-template t
+  "Whether to include existing buffer content as a template for the LLM.
+When non-nil and the buffer has content, gptel-forge-prs will pass the
+existing buffer content (typically a PR template inserted by forge) to
+the LLM to use as a structure for the generated description."
   :type 'boolean
-  :group 'gptel-forge)
+  :group 'gptel-forge-prs)
 
 (custom-declare-variable
- 'gptel-forge-model nil
- "The gptel model to use, defaults to `gptel-model` if nil.
+ 'gptel-forge-prs-model nil
+ "The gptel model to use, defaults to `gptel-model' if nil.
 
-See `gptel-model` for documentation.
+See `gptel-model' for documentation.
 
 If set to a model that uses a different backend than
-`gptel-backend`, also requires `gptel-forge-backend' to be set to
-the correct backend."
+`gptel-backend', also requires `gptel-forge-prs-backend' to be
+set to the correct backend."
  :type (get 'gptel-model 'custom-type)
- :group 'gptel-forge)
+ :group 'gptel-forge-prs)
 
 (custom-declare-variable
- 'gptel-forge-backend nil
- "The gptel backend to use, defaults to `gptel-backend` if nil.
+ 'gptel-forge-prs-backend nil
+ "The gptel backend to use, defaults to `gptel-backend' if nil.
 
-See `gptel-backend` for documentation."
+See `gptel-backend' for documentation."
  :type (get 'gptel-backend 'custom-type)
- :group 'gptel-forge)
+ :group 'gptel-forge-prs)
 
-(defvar gptel-forge-rationale-buffer "*gptel-forge Rationale*"
+(defvar gptel-forge-prs-rationale-buffer "*gptel-forge-prs Rationale*"
   "Buffer name for entering rationale for PR description generation.")
 
-(defvar-local gptel-forge--current-post-buffer nil
+(defvar-local gptel-forge-prs--current-post-buffer nil
   "Buffer where PR description is being generated.")
 
-(defvar-local gptel-forge--source-branch nil
+(defvar-local gptel-forge-prs--source-branch nil
   "Source branch for PR generation.")
 
-(defvar-local gptel-forge--target-branch nil
+(defvar-local gptel-forge-prs--target-branch nil
   "Target branch for PR generation.")
 
-(defun gptel-forge--request (&rest args)
-  "Call `gptel-request` with ARGS.
+(defun gptel-forge-prs--request (&rest args)
+  "Call `gptel-request' with ARGS.
 Respects configured model/backend options."
   (declare (indent 1))
-  (let* ((gptel-backend (or gptel-forge-backend gptel-backend))
-         (gptel-model (or gptel-forge-model gptel-model)))
+  (let* ((gptel-backend (or gptel-forge-prs-backend gptel-backend))
+         (gptel-model (or gptel-forge-prs-model gptel-model)))
     (apply #'gptel-request args)))
 
-(defun gptel-forge--get-buffer-template ()
+(defun gptel-forge-prs--get-buffer-template ()
   "Get the existing buffer content to use as a template.
 Returns the buffer content excluding the forge comment header,
-or nil if the buffer is empty or `gptel-forge-use-buffer-template' is nil."
-  (when gptel-forge-use-buffer-template
+or nil if the buffer is empty or `gptel-forge-prs-use-buffer-template' is nil."
+  (when gptel-forge-prs-use-buffer-template
     (let ((content (string-trim (buffer-substring-no-properties (point-min) (point-max)))))
       ;; Remove the forge comment header (lines starting with "# ")
       (when (and content (not (string-empty-p content)))
@@ -173,7 +173,7 @@ or nil if the buffer is empty or `gptel-forge-use-buffer-template' is nil."
             (unless (string-empty-p result)
               result)))))))
 
-(defun gptel-forge--get-diff (source target)
+(defun gptel-forge-prs--get-diff (source target)
   "Get the diff between SOURCE and TARGET branches for PR."
   (when (and source target)
     (let ((diff (magit-git-output "diff" (format "%s...%s" target source))))
@@ -181,12 +181,12 @@ or nil if the buffer is empty or `gptel-forge-use-buffer-template' is nil."
           (error "No diff found between %s and %s" target source)
         diff))))
 
-(defun gptel-forge--generate (source target callback &optional rationale buffer-template)
+(defun gptel-forge-prs--generate (source target callback &optional rationale buffer-template)
   "Generate a PR description for SOURCE to TARGET branches.
 Invokes CALLBACK with the generated description when done.
 Optional RATIONALE provides context for why the changes were made.
-Optional BUFFER-TEMPLATE is existing buffer content to use as a template structure."
-  (let* ((diff (gptel-forge--get-diff source target))
+BUFFER-TEMPLATE is existing buffer content to use as a template structure."
+  (let* ((diff (gptel-forge-prs--get-diff source target))
          (prompt (concat
                   ;; Add rationale if provided
                   (when (and rationale (not (string-empty-p rationale)))
@@ -196,22 +196,22 @@ Optional BUFFER-TEMPLATE is existing buffer content to use as a template structu
                     (format "PR template to follow:\n%s\n\n" buffer-template))
                   ;; Add the diff
                   (format "Code changes:\n%s" diff))))
-    (gptel-forge--request prompt
-      :system gptel-forge-pr-prompt
+    (gptel-forge-prs--request prompt
+      :system gptel-forge-prs-pr-prompt
       :context nil
       :callback (lambda (response info)
                   (cond
                    (response
                     (funcall callback response))
                    ((plist-get info :error)
-                    (message "gptel-forge: Error: %s"
+                    (message "gptel-forge-prs: Error: %s"
                              (or (plist-get (plist-get info :error) :message)
                                  (plist-get info :error))))
                    (t
-                    (message "gptel-forge: Failed to generate PR description (status: %s)"
+                    (message "gptel-forge-prs: Failed to generate description (status: %s)"
                              (plist-get info :status))))))))
 
-(defun gptel-forge-generate-description ()
+(defun gptel-forge-prs-generate-description ()
   "Generate a PR description when in the forge post buffer.
 This command is available when editing a new pull-request."
   (interactive)
@@ -221,11 +221,11 @@ This command is available when editing a new pull-request."
   (let ((source forge--buffer-head-branch)
         (target forge--buffer-base-branch)
         (buf (current-buffer))
-        (template (gptel-forge--get-buffer-template)))
+        (template (gptel-forge-prs--get-buffer-template)))
     (unless (and source target)
       (user-error "Source or target branch not set"))
-    (message "gptel-forge: Generating PR description...")
-    (gptel-forge--generate
+    (message "gptel-forge-prs: Generating PR description...")
+    (gptel-forge-prs--generate
      source target
      (lambda (description)
        (when (buffer-live-p buf)
@@ -237,12 +237,12 @@ This command is available when editing a new pull-request."
      nil
      template)))
 
-(define-derived-mode gptel-forge-rationale-mode text-mode "gptel-forge-Rationale"
+(define-derived-mode gptel-forge-prs-rationale-mode text-mode "gptel-forge-prs-Rationale"
   "Mode for entering PR rationale before generating description."
-  (local-set-key (kbd "C-c C-c") #'gptel-forge--submit-rationale)
-  (local-set-key (kbd "C-c C-k") #'gptel-forge--cancel-rationale))
+  (local-set-key (kbd "C-c C-c") #'gptel-forge-prs--submit-rationale)
+  (local-set-key (kbd "C-c C-k") #'gptel-forge-prs--cancel-rationale))
 
-(defun gptel-forge--setup-rationale-buffer ()
+(defun gptel-forge-prs--setup-rationale-buffer ()
   "Setup the rationale buffer with proper guidance."
   (let ((inhibit-read-only t))
     (erase-buffer)
@@ -255,8 +255,8 @@ This command is available when editing a new pull-request."
     (insert "\n")
     (goto-char (point-max))))
 
-(defun gptel-forge--submit-rationale ()
-  "Submit the rationale buffer content and proceed with PR description generation."
+(defun gptel-forge-prs--submit-rationale ()
+  "Submit rationale and proceed with PR description generation."
   (interactive)
   (let ((rationale (string-trim
                     (buffer-substring-no-properties
@@ -267,14 +267,14 @@ This command is available when editing a new pull-request."
                          (forward-char))
                        (point))
                      (point-max))))
-        (source gptel-forge--source-branch)
-        (target gptel-forge--target-branch)
-        (buf gptel-forge--current-post-buffer)
-        (template (with-current-buffer gptel-forge--current-post-buffer
-                    (gptel-forge--get-buffer-template))))
+        (source gptel-forge-prs--source-branch)
+        (target gptel-forge-prs--target-branch)
+        (buf gptel-forge-prs--current-post-buffer)
+        (template (with-current-buffer gptel-forge-prs--current-post-buffer
+                    (gptel-forge-prs--get-buffer-template))))
     (quit-window t)
-    (message "gptel-forge: Generating PR description with rationale...")
-    (gptel-forge--generate
+    (message "gptel-forge-prs: Generating PR description with rationale...")
+    (gptel-forge-prs--generate
      source target
      (lambda (description)
        (when (buffer-live-p buf)
@@ -286,13 +286,13 @@ This command is available when editing a new pull-request."
      rationale
      template)))
 
-(defun gptel-forge--cancel-rationale ()
+(defun gptel-forge-prs--cancel-rationale ()
   "Cancel rationale input and abort PR description generation."
   (interactive)
   (quit-window t)
   (message "PR description generation canceled."))
 
-(defun gptel-forge-generate-description-with-rationale ()
+(defun gptel-forge-prs-generate-description-with-rationale ()
   "Generate a PR description with rationale when in the forge post buffer.
 This opens a buffer to enter context about why the changes were made,
 which helps the LLM generate a better description."
@@ -305,29 +305,29 @@ which helps the LLM generate a better description."
         (target forge--buffer-base-branch))
     (unless (and source target)
       (user-error "Source or target branch not set"))
-    (let ((buffer (get-buffer-create gptel-forge-rationale-buffer)))
+    (let ((buffer (get-buffer-create gptel-forge-prs-rationale-buffer)))
       (with-current-buffer buffer
-        (gptel-forge-rationale-mode)
-        (gptel-forge--setup-rationale-buffer)
-        (setq gptel-forge--current-post-buffer post-buffer)
-        (setq gptel-forge--source-branch source)
-        (setq gptel-forge--target-branch target))
+        (gptel-forge-prs-rationale-mode)
+        (gptel-forge-prs--setup-rationale-buffer)
+        (setq gptel-forge-prs--current-post-buffer post-buffer)
+        (setq gptel-forge-prs--source-branch source)
+        (setq gptel-forge-prs--target-branch target))
       (pop-to-buffer buffer))))
 
 ;;;###autoload
-(defun gptel-forge-install ()
-  "Install gptel-forge functionality.
-This adds keybindings to `forge-post-mode-map' for generating PR descriptions."
+(defun gptel-forge-prs-install ()
+  "Install gptel-forge-prs functionality.
+Adds keybindings to `forge-post-mode-map' for generating PR descriptions."
   (require 'forge-post)
-  (define-key forge-post-mode-map (kbd "M-g") #'gptel-forge-generate-description)
-  (define-key forge-post-mode-map (kbd "M-r") #'gptel-forge-generate-description-with-rationale))
+  (define-key forge-post-mode-map (kbd "M-g") #'gptel-forge-prs-generate-description)
+  (define-key forge-post-mode-map (kbd "M-r") #'gptel-forge-prs-generate-description-with-rationale))
 
 ;;;###autoload
-(defun gptel-forge-uninstall ()
-  "Uninstall gptel-forge functionality."
+(defun gptel-forge-prs-uninstall ()
+  "Uninstall gptel-forge-prs functionality."
   (require 'forge-post)
   (define-key forge-post-mode-map (kbd "M-g") nil)
   (define-key forge-post-mode-map (kbd "M-r") nil))
 
-(provide 'gptel-forge)
-;;; gptel-forge.el ends here
+(provide 'gptel-forge-prs)
+;;; gptel-forge-prs.el ends here
